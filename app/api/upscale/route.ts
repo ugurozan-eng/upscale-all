@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/prisma";
 import { getUserCredits, hasEnoughCredits, deductCredits, addCredits } from "@/lib/credits";
 import { getProviderForCategory, UpscaleCategory } from "@/lib/router";
-import { upscaleWithFal } from "@/lib/providers/fal";
 import { uploadToSpaces, getStorageKey } from "@/lib/storage";
 import { nanoid } from "nanoid";
 
@@ -44,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   // Determine provider
   const route = getProviderForCategory(category as UpscaleCategory);
-  const provider = route.primary; // Phase 2 will add fallback logic
+  const provider = route.primary;
 
   // Create job record
   const job = await db.upscaleJob.create({
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
   // Deduct credits immediately (refund on failure)
   await deductCredits(session.user.id, 4, job.id);
 
-  // Process async (fire-and-forget in Phase 1)
+  // Process async (fire-and-forget)
   processJob(job.id, session.user.id, inputUrl, category, scale, provider, route.fallback);
 
   return NextResponse.json({ jobId: job.id, status: "processing" });
@@ -74,22 +73,54 @@ async function processJob(
   inputUrl: string,
   category: string,
   scale: number,
-  provider: string,
+  primaryProvider: string,
   fallbackProvider: string
 ) {
+  const tryProvider = async (provider: string): Promise<string> => {
+    switch (provider) {
+      case "claid": {
+        const { upscaleWithClaid } = await import("@/lib/providers/claid");
+        const r = await upscaleWithClaid({ imageUrl: inputUrl, category, scale });
+        return r.outputUrl;
+      }
+      case "fal": {
+        const { upscaleWithFal } = await import("@/lib/providers/fal");
+        const r = await upscaleWithFal({ imageUrl: inputUrl, category, scale });
+        return r.outputUrl;
+      }
+      case "runware": {
+        const { upscaleWithRunware } = await import("@/lib/providers/runware");
+        const r = await upscaleWithRunware({ imageUrl: inputUrl, scale });
+        return r.outputUrl;
+      }
+      default:
+        throw new Error(`Unknown provider: ${provider}`);
+    }
+  };
+
   try {
-    let outputUrl: string;
+    let rawOutputUrl: string;
+    try {
+      rawOutputUrl = await tryProvider(primaryProvider);
+    } catch (primaryErr) {
+      console.warn(
+        `Primary provider ${primaryProvider} failed, trying fallback ${fallbackProvider}:`,
+        primaryErr
+      );
+      await db.upscaleJob.update({
+        where: { id: jobId },
+        data: { provider: fallbackProvider },
+      });
+      rawOutputUrl = await tryProvider(fallbackProvider);
+    }
 
-    // Phase 1: only fal.ai is implemented; all categories fall through to fal
-    const result = await upscaleWithFal({ imageUrl: inputUrl, category, scale });
-
-    // Download result and re-upload to our Spaces for persistence
-    const response = await fetch(result.outputUrl);
+    // Re-upload to our DO Spaces for persistence
+    const response = await fetch(rawOutputUrl);
     const buffer = Buffer.from(await response.arrayBuffer());
     const contentType = response.headers.get("content-type") ?? "image/png";
     const ext = contentType.split("/")[1].replace("jpeg", "jpg");
     const key = getStorageKey(userId, `${nanoid()}.${ext}`, "output");
-    outputUrl = await uploadToSpaces(key, buffer, contentType);
+    const outputUrl = await uploadToSpaces(key, buffer, contentType);
 
     await db.upscaleJob.update({
       where: { id: jobId },
@@ -97,7 +128,6 @@ async function processJob(
     });
   } catch (err) {
     console.error(`Job ${jobId} failed:`, err);
-
     await db.upscaleJob.update({
       where: { id: jobId },
       data: {
@@ -105,8 +135,6 @@ async function processJob(
         errorMsg: err instanceof Error ? err.message : "Unknown error",
       },
     });
-
-    // Refund credits on failure
     await addCredits(userId, 4, "refund", { jobId });
   }
 }
