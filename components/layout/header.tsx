@@ -23,6 +23,12 @@ export function Header({ user, credits = 0 }: HeaderProps) {
           UpscaleAll
         </Link>
 
+        <nav className="flex items-center gap-4">
+          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+            History
+          </Link>
+        </nav>
+
         <div className="flex items-center gap-3">
           <Badge variant="secondary" className="gap-1">
             <span className="text-xs">⚡</span>
