@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { UploadZone } from "./upload-zone";
 import { CategorySelector } from "./category-selector";
+import { ComparisonSlider } from "./comparison-slider";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { UpscaleCategory, CATEGORY_LABELS } from "@/lib/router";
@@ -100,13 +101,12 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
         </div>
       )}
 
-      {status === "done" && outputUrl && (
+      {status === "done" && outputUrl && inputUrl && (
         <div className="space-y-3">
-          <h2 className="text-sm font-medium text-zinc-500">Result</h2>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={outputUrl} alt="Upscaled result" className="rounded-xl" />
+          <h2 className="text-sm font-medium text-zinc-500">Result — drag to compare</h2>
+          <ComparisonSlider beforeUrl={inputUrl} afterUrl={outputUrl} />
           <a href={outputUrl} download>
-            <Button className="w-full">Download</Button>
+            <Button className="w-full">⬇ Download</Button>
           </a>
           <Button variant="outline" className="w-full" onClick={() => {
             setStatus("idle"); setInputUrl(null); setCategory(null);
