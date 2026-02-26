@@ -27,6 +27,9 @@ export function Header({ user, credits = 0 }: HeaderProps) {
           <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
             History
           </Link>
+          <Link href="/dashboard/billing" className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
+            Billing
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -34,9 +37,6 @@ export function Header({ user, credits = 0 }: HeaderProps) {
             <span className="text-xs">⚡</span>
             {credits} credits
           </Badge>
-          <Link href="/dashboard/billing">
-            <Button variant="outline" size="sm">Buy Credits</Button>
-          </Link>
           <Button
             variant="ghost"
             size="sm"
