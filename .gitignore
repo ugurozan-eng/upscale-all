@@ -45,3 +45,5 @@ next-env.d.ts
 
 # Git worktrees
 .worktrees/
+
+/lib/generated/prisma
