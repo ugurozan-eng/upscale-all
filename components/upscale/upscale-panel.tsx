@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { UploadZone } from "./upload-zone";
 import { CategorySelector } from "./category-selector";
 import { ComparisonSlider } from "./comparison-slider";
@@ -17,7 +18,6 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
   const [status, setStatus] = useState<JobStatus>("idle");
   const [jobId, setJobId] = useState<string | null>(null);
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [credits, setCredits] = useState(initialCredits);
 
   const poll = useCallback((id: string) => {
@@ -27,11 +27,12 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
       if (data.status === "done") {
         clearInterval(interval);
         setOutputUrl(data.outputUrl);
+        toast.success("Upscale complete!");
         setStatus("done");
         setCredits((c) => c - 4);
       } else if (data.status === "failed") {
         clearInterval(interval);
-        setError(data.errorMsg ?? "Processing failed. Credits refunded.");
+        toast.error(data.errorMsg ?? "Processing failed. Credits refunded.");
         setStatus("failed");
       }
     }, 3000);
@@ -40,7 +41,6 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
 
   const handleUpscale = async () => {
     if (!inputUrl || !category) return;
-    setError(null);
     setStatus("processing");
 
     const res = await fetch("/api/upscale", {
@@ -51,7 +51,7 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
     const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error);
+      toast.error(data.error);
       setStatus("failed");
       return;
     }
@@ -116,8 +116,6 @@ export function UpscalePanel({ initialCredits }: { initialCredits: number }) {
           </Button>
         </div>
       )}
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
 
       {credits < 4 && status === "idle" && (
         <p className="text-sm text-amber-600">
