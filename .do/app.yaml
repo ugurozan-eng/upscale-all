@@ -20,6 +20,12 @@ services:
       - key: AUTH_SECRET
         scope: RUN_TIME
         type: SECRET
+      - key: AUTH_URL
+        scope: RUN_TIME
+        value: "https://upscaleall.com"
+      - key: AUTH_TRUST_HOST
+        scope: RUN_TIME
+        value: "true"
       - key: AUTH_GOOGLE_ID
         scope: RUN_TIME
         type: SECRET
