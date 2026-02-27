@@ -1,0 +1,82 @@
+name: upscaleall
+region: fra
+
+services:
+  - name: web
+    source_dir: /
+    github:
+      repo: ugurozan-eng/upscale-all
+      branch: main
+      deploy_on_push: true
+    build_command: npm run build
+    run_command: npm start
+    environment_slug: node-js
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 3000
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: AUTH_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: AUTH_GOOGLE_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: AUTH_GOOGLE_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: DO_SPACES_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DO_SPACES_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: DO_SPACES_ENDPOINT
+        scope: RUN_TIME
+        value: "https://fra1.digitaloceanspaces.com"
+      - key: DO_SPACES_BUCKET
+        scope: RUN_TIME
+        value: "vibecoding-upscale-v1"
+      - key: DO_SPACES_REGION
+        scope: RUN_TIME
+        value: "fra1"
+      - key: DO_SPACES_CDN_ENDPOINT
+        scope: RUN_TIME
+        value: "https://vibecoding-upscale-v1.fra1.cdn.digitaloceanspaces.com"
+      - key: FAL_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: CLAID_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: RUNWARE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: LEMONSQUEEZY_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: LEMONSQUEEZY_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: LEMONSQUEEZY_STORE_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: LS_VARIANT_STARTER
+        scope: RUN_TIME
+        type: SECRET
+      - key: LS_VARIANT_POPULAR
+        scope: RUN_TIME
+        type: SECRET
+      - key: LS_VARIANT_PRO
+        scope: RUN_TIME
+        type: SECRET
+      - key: LS_VARIANT_BASIC_SUB
+        scope: RUN_TIME
+        type: SECRET
+      - key: LS_VARIANT_PRO_SUB
+        scope: RUN_TIME
+        type: SECRET
+      - key: NEXT_PUBLIC_APP_URL
+        scope: RUN_AND_BUILD_TIME
+        value: "https://upscaleall.com"
